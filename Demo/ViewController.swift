@@ -10,11 +10,12 @@ import UIKit
 
 import DSPageController
 
-class ViewController: PageViewController {
+class ViewController: PageContentViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        self.dataSource = self
         // Do any additional setup after loading the view, typically from a nib.
     }
 
@@ -26,17 +27,17 @@ class ViewController: PageViewController {
 
 }
 
-extension ViewController  {
-    
-    func numberOfViewControllers(_ pageViewController: PageViewController) -> Int {
-        return 2
-    }
-    
-    func pageViewController(_ pageViewController: PageViewController, viewControllerAtIndex index: Int) -> UIViewController {
+extension ViewController: PageContentViewControllerDataSource  {
+    func contentViewController(_ viewController: PageContentViewController, viewControllerAt index: Int) -> UIViewController {
         let vc = UIViewController()
         print("create view")
         vc.view.backgroundColor = index%2 == 0 ? UIColor.red : UIColor.yellow
         return vc
+    }
+    
+    
+    func numberOfViewController(_ viewController: PageContentViewController) -> Int {
+        return 2
     }
 }
 
