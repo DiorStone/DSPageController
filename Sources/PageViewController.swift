@@ -43,13 +43,50 @@ public protocol PageableMenuView {
 ///
 /// 参考链接
 /// * [WMPageController](https://github.com/wangmchn/WMPageController-Swift/blob/master/PageController/PageController.swift)
-open class PageViewController: PageContentViewController, PageViewDataSource, PageViewDelegate {
-  
+open class PageViewController: UIViewController, PageViewDataSource, PageViewDelegate {
+    
+    lazy var contentViewController: PageContentViewController =  { [weak self] in
+        let viewController = PageContentViewController()
+        viewController.willMove(toParentViewController: self)
+        addChildViewController(viewController)
+        self?.view.addSubview(viewController.view)
+        viewController.didMove(toParentViewController: self)
+        return viewController
+    }()
+    
     var menuFrame: CGRect?
     var contentFrame: CGRect?
     var viewControllers: [UIViewController.Type] = []
+//    var menuView: (UIView & PageableMenuView)?
+    var menuView: UIView? {
+        didSet {
+            self.view.addSubview(self.menuView!)
+        }
+    }
+    var pageConfiger: [String: Any] = [:]
     
-    var menuView: (UIView & PageableMenuView)?
+    //MARK: Config
+    
+    /// 默认self
+    weak open var dataSource: PageViewDataSource? {
+        set {
+            self.contentViewController.dataSource = newValue
+        }
+        get {
+            return self.contentViewController.dataSource as? PageViewDataSource
+        }
+    }
+    
+    /// 默认self
+    weak open var delegate: PageViewDelegate? {
+        set {
+            self.contentViewController.delegate = newValue
+        }
+        get {
+            return self.contentViewController.delegate as? PageViewDelegate
+        }
+    }
+    
     
     public convenience init(viewControllers: [UIViewController.Type]) {
         self.init()
@@ -58,24 +95,26 @@ open class PageViewController: PageContentViewController, PageViewDataSource, Pa
     
     open override func viewDidLoad() {
         super.viewDidLoad()
-        self.dataSource = self
-        self.delegate = self
-        self.reloadData()
+        self.contentViewController.dataSource = self
+        self.contentViewController.delegate = self
+        self.contentViewController.reloadData()
     }
     
     open override func viewDidLayoutSubviews() {
-        
+        super.viewDidLayoutSubviews()
         calculateSize()
         adjustMenuViewFrame()
         adjustScrollViewFrame()
-        
-        super.viewDidLayoutSubviews()
+    }
+    
+    public func reloadData() {
+        self.contentViewController.reloadData()
     }
     
     //MARK: private
     fileprivate func calculateSize() {
-        self.menuFrame = (self.dataSource as? PageViewDataSource)?.frameForMenuView(self)
-        self.contentFrame = (self.dataSource as? PageViewDataSource)?.frameForContentView(self)
+        self.menuFrame = self.dataSource?.frameForMenuView(self)
+        self.contentFrame = self.dataSource?.frameForContentView(self)
     }
     
     fileprivate func adjustMenuViewFrame() {
@@ -83,17 +122,21 @@ open class PageViewController: PageContentViewController, PageViewDataSource, Pa
     }
     
     fileprivate func adjustScrollViewFrame() {
-        self.scrollView.frame = contentFrame ?? self.scrollView.frame
+        self.contentViewController.scrollView.frame = contentFrame ?? self.contentViewController.scrollView.frame
     }
     
     
     //MARK: PageViewDataSource
     open func frameForMenuView(_ viewController: PageViewController) -> CGRect {
-        return CGRect.zero
+        var frame = self.view.bounds
+        frame.size.height = 90
+        return frame
     }
     
     open func frameForContentView(_ viewController: PageViewController) -> CGRect {
-        return self.view.bounds
+        let menuFrame = self.dataSource?.frameForMenuView(viewController) ?? CGRect.zero
+        let contentFrame = CGRect(x: 0, y: menuFrame.maxY, width: menuFrame.width, height: self.view.bounds.height - menuFrame.maxY)
+        return contentFrame
     }
     
     open func numberOfViewController(_ viewController: PageContentViewController) -> Int {
@@ -105,4 +148,7 @@ open class PageViewController: PageContentViewController, PageViewDataSource, Pa
     }
     
     //MARK: PageViewDelegate
+    public func contentViewController(_ viewController: PageContentViewController, percent: CGFloat) {
+        
+    }
 }

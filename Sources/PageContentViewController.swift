@@ -27,7 +27,19 @@ import UIKit
 
 public protocol PageContentViewDataSource: class {
     
+    /// 配置Page数量
+    ///
+    /// - Parameters:
+    ///   - viewController: Page容器
+    /// - Returns: page数量
     func numberOfViewController(_ viewController: PageContentViewController) -> Int
+    
+    /// 配置每页视图
+    ///
+    /// - Parameters:
+    ///   - viewController:  Page容器
+    ///   - index: 当前页
+    /// - Returns: 每页视图
     func contentViewController(_ viewController: PageContentViewController, viewControllerAt index: Int) -> UIViewController
 }
 
@@ -42,9 +54,8 @@ public protocol PageContentViewDelegate: class {
 open class PageContentViewController: UIViewController, UIScrollViewDelegate {
     
     //MARK: Config
-    public weak var dataSource: PageContentViewDataSource?
-    public weak var delegate: PageContentViewDelegate?
-    
+    weak open var dataSource: PageContentViewDataSource?
+    weak open var delegate: PageContentViewDelegate?
     /// 当前选中页
     public fileprivate(set) var currentPageIndex: Int = 0
     
@@ -53,25 +64,21 @@ open class PageContentViewController: UIViewController, UIScrollViewDelegate {
     fileprivate var isExplicityScrolling = false
     
     //MARK: UI
-    public let scrollView: UIScrollView = {
+    public var scrollView: UIScrollView  {
+        return self.view as! UIScrollView
+    }
+    
+    open override func loadView() {
+        super.loadView()
         let scrollView = UIScrollView()
+        scrollView.delegate = self
         scrollView.isPagingEnabled = true
         scrollView.showsVerticalScrollIndicator = false
         scrollView.showsHorizontalScrollIndicator = false
         scrollView.bounces = false
         scrollView.backgroundColor = .clear
-        return scrollView
-    }()
-    
-    open override func viewDidLoad() {
-        super.viewDidLoad()
         
-        //add scrollview
-        scrollView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-        scrollView.frame = self.view.bounds
-        scrollView.delegate = self
-        self.view.addSubview(scrollView)
-        self.view.backgroundColor = .clear
+        self.view = scrollView
     }
     
     open override func viewDidLayoutSubviews() {
@@ -81,7 +88,6 @@ open class PageContentViewController: UIViewController, UIScrollViewDelegate {
         scrollView.contentSize = CGSize(
             width: scrollView.bounds.width * CGFloat(numberOfPages),
             height: scrollView.bounds.height)
-        scrollView.contentOffset = CGPoint(x: scrollView.bounds.width * CGFloat(currentPageIndex), y: 0)
         cachedViewControllers.enumerated().forEach {(offset, viewController) in
             viewController?.view.frame = scrollView.bounds
             viewController?.view.frame.origin.x = scrollView.bounds.width * CGFloat(offset)
@@ -168,7 +174,6 @@ open class PageContentViewController: UIViewController, UIScrollViewDelegate {
             viewController.didMove(toParentViewController: self)
             cachedViewControllers[page] = viewController
         }
-        
     }
     
     fileprivate func removeAll() {
@@ -213,4 +218,3 @@ open class PageContentViewController: UIViewController, UIScrollViewDelegate {
         loadPagesIfNeeded()
     }
 }
-

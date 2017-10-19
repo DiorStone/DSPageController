@@ -21,6 +21,14 @@ class ViewController: PageViewController {
         // Dispose of any resources that can be recreated.
     }
 
+    override func numberOfViewController(_ viewController: PageContentViewController) -> Int {
+        return 2
+    }
 
+    override func contentViewController(_ viewController: PageContentViewController, viewControllerAt index: Int) -> UIViewController {
+        let viewController = UIViewController()
+        viewController.view.backgroundColor =  (index % 2 == 0) ? .red : .yellow
+        return viewController
+    }
 }
 
